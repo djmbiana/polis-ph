@@ -52,3 +52,18 @@ the host to avoid conflicts with the existing Homebrew PostgreSQL instance runni
 - **Good:** Portable, Opens up the possibility to version control the database.
 - **Bad:** Requires more set up.
 
+---
+## ADR-004: Opted to implement Batch Processing instead of Streaming
+**Date:** 2026-05-21
+
+### Context
+The project initally proposed streaming to the interactive site through Kafka.
+Upon further research, that would be overkill for the way election data is distributed across the news.
+
+### Considered
+Considered using Kafka to slowly feed the datasets through Kafka. Rejected as that would make little to no measurable impact on the way
+data is fed to the live dashboard
+
+### Trade-offs
+- **Good:** Easier setup, Fits the method in which election data is distributed in the Philippines (in batches every hour via precinct's sharing their counts)
+- **Bad:** We lose speed (batch has more volume however it loses the speed given by data streaming)
