@@ -57,13 +57,9 @@ the host to avoid conflicts with the existing Homebrew PostgreSQL instance runni
 **Date:** 2026-05-21
 
 ### Context
-The project initally proposed streaming to the interactive site through Kafka.
-Upon further research, that would be overkill for the way election data is distributed across the news.
-
-### Considered
-Considered using Kafka to slowly feed the datasets through Kafka. Rejected as that would make little to no measurable impact on the way
-data is fed to the live dashboard
+The project initially proposed streaming for data ingestion through Kafka.
+Upon further research, that would be overkill for the way election data is distributed nationwide.
 
 ### Trade-offs
 - **Good:** Easier setup, Fits the method in which election data is distributed in the Philippines (in batches every hour via precinct's sharing their counts)
-- **Bad:** We lose speed (batch has more volume however it loses the speed given by data streaming)
+- **Bad:** Batch has higher latency compared to real-time data streaming as there is inhernetly always going to be a buffer state between each batch.
