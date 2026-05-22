@@ -60,6 +60,10 @@ the host to avoid conflicts with the existing Homebrew PostgreSQL instance runni
 The project initially proposed streaming for data ingestion through Kafka.
 Upon further research, that would be overkill for the way election data is distributed nationwide.
 
+## Considered
+Considered streaming initally however upon reading Fundamentals of Data Engineering (CH.2), I learned that streaming should only
+be implemented if there is business value that can benefit from it. There is no such value provided in the election data.
+
 ### Trade-offs
 - **Good:** Easier setup, Fits the method in which election data is distributed in the Philippines (in batches every hour via precinct's sharing their counts)
 - **Bad:** Batch has higher latency compared to real-time data streaming as there is inhernetly always going to be a buffer state between each batch.
