@@ -106,5 +106,12 @@ def _(df):
     return
 
 
+@app.cell
+def _(df):
+    # Investigating the additional 3 regions (expected 17)
+    df['region'].unique()
+    return
+
+
 if __name__ == "__main__":
     app.run()
