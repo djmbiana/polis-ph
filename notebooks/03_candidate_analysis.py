@@ -60,6 +60,14 @@ def _(sen_votes_region, top12):
     return (top12_regions,)
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    #### Vote share of each candidate per region
+    """)
+    return
+
+
 @app.cell
 def _(df, top12_regions):
     # change the candidate name for the candidate you want to examine
@@ -69,6 +77,15 @@ def _(df, top12_regions):
     joined_df = bato.join(actual_vote_sum)
     joined_df["voteShare"] = (joined_df[candidate] / joined_df["actualVoters"] * 100).round(2)
     joined_df
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Future Scope
+    - Region -> Province -> City -> Barangay
+    """)
     return
 
 
