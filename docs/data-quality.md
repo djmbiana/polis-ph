@@ -30,3 +30,8 @@
 - 20 unique regions (Expected 17, The 3 additional entries are OAV (Overseas Absentee Voting), LAV (Local Absentee Voting), and NIR (Negros Island Region) which are treated as region-level identifiers)
 - 92 unique provinces (Expected 82, same reason as the regions)
 - 25,592 unique barangays (Lower than the 42,011 national count due to COMELEC's clustered precinct system) 
+
+## Candidate Findings
+- Wide format: candidate votes stored as individual columns, one per candidate (66 total)
+- Candidates tend to score higher vote shares in their home region (tested against Dela Rosa, Go, and Pangilinan)
+- Top 12 winners align with COMELEC's official results (confirms dataset accuracy)
