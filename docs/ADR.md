@@ -67,3 +67,18 @@ be implemented if there is business value that can benefit from it. There is no 
 ### Trade-offs
 - **Good:** Easier setup, Fits the method in which election data is distributed in the Philippines (in batches every hour via precinct's sharing their counts)
 - **Bad:** Batch has higher latency compared to real-time data streaming as there is inhernetly always going to be a buffer state between each batch.
+
+---
+## ADR-005: Switched from Jupyter Notebook to Marimo
+**Date:** 2026-05-25
+
+### Context
+A colleague suggested that I switch to Marimo due to its reactive nature fitting the dynamic nature of my exploration analysis.
+
+## Considered
+Sticking with Jupyter, upon further research and reading I found that I could greatly benefit from Marimo's reactivity. It is also harder to
+version control `.ipynb` files as compared to Marimo keeping everything in `.py` (raw python).
+
+## Trade-offs
+- **Good:** Reactive cells, updates dependencies as changes are typed out.
+- **Bad:** Marimo is a new project, it might not be compatible with some python packages
