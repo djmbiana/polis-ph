@@ -15,14 +15,14 @@ def _():
 @app.cell
 def _():
     import pandas as pd
-    df = pd.read_csv("../datasets/senate25-final_updated.csv")
+    df = pd.read_csv("../../datasets/senate25-final_updated.csv")
     return (df,)
 
 
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Election Winners
+    ## Election Winners (Senate)
     - Senators who place within the top 12 have won their respective election
     - The dataset lines up with the official results released via COMELECS website, meaning that the data is accurate
     """)
