@@ -24,7 +24,7 @@ def _(mo):
 def _():
     # Importing pandas and loading the senate25-final csv file
     import pandas as pd
-    df = pd.read_csv("../datasets/senate25-final_updated.csv")
+    df = pd.read_csv("../../datasets/senate25-final_updated.csv")
     return df, pd
 
 
@@ -48,7 +48,7 @@ def _(mo):
 
 @app.cell
 def _(df):
-    print(df.info())
+    print(df.info(verbose=True))
     return
 
 
