@@ -23,4 +23,13 @@ def separate_df(df: pd.DataFrame) -> tuple:
     return oav, lav, domestic
 
 
-# def normalize_columns():
+def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    converts all camelCase columns to snake_case for readability.
+    also changes all columns to uppercase as the candidates names are all capitalized (for consistency).
+    """
+    df.columns = df.columns.str.replace(
+        "(?<=[a-z])(?=[A-Z])", "_", regex=True
+    ).str.upper()
+
+    return df
