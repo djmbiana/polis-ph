@@ -30,3 +30,7 @@ def load_partylist_25(filepath: Path) -> pd.DataFrame:
     df.to_sql("partylist_25", eng, if_exists="replace", index=False, schema="raw")
 
     return df
+
+
+load_senate_25(file_path_senate)
+load_partylist_25(file_path_partylist)
