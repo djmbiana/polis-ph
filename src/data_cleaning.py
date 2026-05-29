@@ -9,7 +9,7 @@ partylist_df = pd.read_csv(con.RAW_DATA_PATH / "partylist25-final_updated.csv")
 
 def separate_df(df: pd.DataFrame) -> tuple:
     """
-    cleans senate_25.csv by separating OAV, LAV, and Domestic votes
+    cleans result datasets by separating OAV, LAV, and Domestic votes
     this is to cleanly separate the non domestic and special votes for later reporting.
     """
     oav = df[df["region"] == "OAV"].copy()
