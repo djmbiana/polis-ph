@@ -1,7 +1,9 @@
-import config as con
+from pathlib import Path
+
 import pandas as pd
 from sqlalchemy import create_engine
-from pathlib import Path
+
+import config as con
 
 connect_url = con.DB_URL
 file_path_senate = con.RAW_DATA_PATH / "senate25-final_updated.csv"

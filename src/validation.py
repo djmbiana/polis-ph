@@ -1,5 +1,6 @@
-import config as con
 import pandas as pd
+
+import config as con
 
 senate_df = pd.read_csv(con.RAW_DATA_PATH / "senate25-final_updated.csv")
 partylist_df = pd.read_csv(con.RAW_DATA_PATH / "partylist25-final_updated.csv")

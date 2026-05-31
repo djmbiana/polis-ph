@@ -1,5 +1,6 @@
-import config as con
 import pandas as pd
+
+import config as con
 
 # re-write to use df from ingestion later
 
