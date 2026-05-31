@@ -8,7 +8,7 @@
 SELECT COUNT(*) AS total_votes
 FROM raw.senate_25;
 
--- Unique Regions count
+-- Unique  counts per geographic data
 SELECT
     COUNT(DISTINCT region) AS regions
     , COUNT(DISTINCT province) AS provinces
