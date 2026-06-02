@@ -82,3 +82,20 @@ version control `.ipynb` files as compared to Marimo keeping everything in `.py`
 ## Trade-offs
 - **Good:** Reactive cells, updates dependencies as changes are typed out.
 - **Bad:** Marimo is a new project, it might not be compatible with some python packages
+
+---
+## ADR-006: MongoDB will be the raw data landing zone
+
+### Context
+MongoDB will be used as the landing zone for raw data due to the flexibility given by no predefined schema.
+Schema flexibility matters here because of the dataset's wide format with 66+ candidate columns. It would be easier to add more
+incoming data for future elections compared to strict relational schemas.
+
+## Considered
+Using a separate postgres schema known as "raw" and cleaning from there.  MongoDB was chosen for its schemaless architecture
+making changes in an environment that doesnt enforce strict schema rules will allow data cleaning, updating, or inserting easier
+before even loading it into the warehouse.
+
+## Trade-offs
+- **Good:** Schemaless architecture will allow data cleaning and manipulation to be faster and flexible as they do not have the same rules as a strict SQL schema.
+- **Bad:** Adds pipeline failure point as we will have to add a mapper that converts MongoDB documents into PostgreSQL's relational schema
