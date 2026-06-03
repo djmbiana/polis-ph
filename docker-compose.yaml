@@ -17,6 +17,32 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  
+
+  spark:
+    image: docker.io/bitnami/spark:4.1
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=yes
+      - SPARK_RPC_ENCRYPTION_ENABLED=yes
+      - SPARK_LOCAL_STORAGE_ENCRYPTION=yes
+      - SPARK_SSL_ENABLED=no
+      - SPARK_USER=spark
+    ports:
+      - '8081:8080'
+  spark-worker:
+    image: docker.io/bitnami/spark:4.1
+    depends_on:
+      - spark
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=1
+      - SPARK_RPC_AUTHENTICATION_ENABLED=yes
+      - SPARK_RPC_ENCRYPTION_ENABLED=yes
+      - SPARK_LOCAL_STORAGE_ENCRYPTION=yes
+      - SPARK_SSL_ENABLED=no
+      - SPARK_USER=spark 
+
 volumes:
   postgres_data:
