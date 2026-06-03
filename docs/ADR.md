@@ -99,3 +99,21 @@ before even loading it into the warehouse.
 ## Trade-offs
 - **Good:** Schemaless architecture will allow data cleaning and manipulation to be faster and flexible as they do not have the same rules as a strict SQL schema.
 - **Bad:** Adds pipeline failure point as we will have to add a mapper that converts MongoDB documents into PostgreSQL's relational schema
+
+---
+## ADR-007: Airflow as the orchestration engine
+
+## Context
+Polis requires an orchestration engine to ensure pipeline tasks run in the correct order with their
+dependencies satisfied. Without this, the pipeline risks running tasks on incomplete or missing data,
+which would corrupt the interactive map.
+
+## Considered
+- Dagster: rejected because it is data asset-centric rather than task-centric. Better suited for pipelines that treat data as products rather than sequential batch jobs.
+- CRON jobs: rejected because they only schedule by time. They have no awareness of task dependencies or whether upstream steps completed successfully.
+- No orchestration at all: rejected because without dependency management, tasks could run out of order or on stale data, leading to unpredictable pipeline failures.
+
+
+## Trade-offs
+- **Good:** Airflow will ensure that all pipeline tasks run in correct order with satisfied dependencies
+- **Bad:** Can add a failure point of misconfiguration. If Airflow is not configured properly it may cause no data to be pushed at all, breaking the whole pipeline; it also adds infrastructure complexity as Airflow requires its own database, scheduler, and API service.
