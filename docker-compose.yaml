@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:16
@@ -19,30 +17,41 @@ services:
       retries: 5
 
   spark:
-    image: docker.io/bitnami/spark:4.1
-    environment:
-      - SPARK_MODE=master
-      - SPARK_RPC_AUTHENTICATION_ENABLED=yes
-      - SPARK_RPC_ENCRYPTION_ENABLED=yes
-      - SPARK_LOCAL_STORAGE_ENCRYPTION=yes
-      - SPARK_SSL_ENABLED=no
-      - SPARK_USER=spark
+    image: spark:python3-java17
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
     ports:
       - '8081:8080'
+      - '7077:7077'
+
   spark-worker:
-    image: docker.io/bitnami/spark:4.1
+    image: spark:python3-java17
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark:7077
     depends_on:
       - spark
     environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark:7077
       - SPARK_WORKER_MEMORY=1G
       - SPARK_WORKER_CORES=1
-      - SPARK_RPC_AUTHENTICATION_ENABLED=yes
-      - SPARK_RPC_ENCRYPTION_ENABLED=yes
-      - SPARK_LOCAL_STORAGE_ENCRYPTION=yes
-      - SPARK_SSL_ENABLED=no
-      - SPARK_USER=spark 
+
+  mongo:
+    image: mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+
+  mongo-express:
+    image: mongo-express
+    restart: unless-stopped
+    ports:
+      - 8082:8081
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/
+      ME_CONFIG_BASICAUTH_ENABLED: true
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USER}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASS}
 
 volumes:
   postgres_data:
+  mongo_data:
