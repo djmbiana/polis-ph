@@ -24,6 +24,9 @@ services:
       - '7077:7077'
     volumes: 
       - ./spark/jobs:/opt/spark/jobs
+      - ./src:/opt/spark/src
+    env_file:
+      - .env.docker
 
   spark-worker:
     image: spark:python3-java17

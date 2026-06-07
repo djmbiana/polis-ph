@@ -10,3 +10,5 @@ venv/
 volumes/
 __marimo__/
 airflow/logs/
+
+.env.docker
