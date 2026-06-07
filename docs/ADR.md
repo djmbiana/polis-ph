@@ -117,3 +117,19 @@ which would corrupt the interactive map.
 ## Trade-offs
 - **Good:** Airflow will ensure that all pipeline tasks run in correct order with satisfied dependencies
 - **Bad:** Can add a failure point of misconfiguration. If Airflow is not configured properly it may cause no data to be pushed at all, breaking the whole pipeline; it also adds infrastructure complexity as Airflow requires its own database, scheduler, and API service.
+
+---
+## ADR-008: Parquet for intermediate data storage
+
+## Context
+Apache Parquet will be used for intermediate data storage for the transformed data from mongodb before being fed down the pipeline.
+This will be used to minimize the storage space due to parquet compressing and managing the data into directories. Parquet also preserves schema between Spark and DuckDB which will reduce the complications of moving data down the pipeline.
+
+## Considered
+Keeping it as raw CSV's: rejected as csv's will take up more storage as it does not compress files into binary format (as compared to parquet)
+
+## Trade-offs
+- **Good:** Columnar Data (makes it easier to transport down the pipeline.), Columnar format enables fast queries, Preserves schema and data types, Natively supported by Spark, DuckDB, and many analytical tools.
+- **Bad:** Not human-readable like CSV or JSON, Updating individual records is difficult (files are typically re-written), produces multiple files instead of 1 file.
+
+---

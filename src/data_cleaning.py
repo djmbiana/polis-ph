@@ -4,8 +4,9 @@ import config as con
 
 # re-write to use df from ingestion later
 
-senate_df = pd.read_csv(con.RAW_DATA_PATH / "senate25-final_updated.csv")
-partylist_df = pd.read_csv(con.RAW_DATA_PATH / "partylist25-final_updated.csv")
+if __name__ == "main":
+    senate_df = pd.read_csv(con.RAW_DATA_PATH / "senate25-final_updated.csv")
+    partylist_df = pd.read_csv(con.RAW_DATA_PATH / "partylist25-final_updated.csv")
 
 
 def separate_df(df: pd.DataFrame) -> tuple:

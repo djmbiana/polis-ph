@@ -24,6 +24,7 @@ services:
       - '7077:7077'
     volumes: 
       - ./spark/jobs:/opt/spark/jobs
+      - ./spark/output:/opt/spark/output
       - ./src:/opt/spark/src
     env_file:
       - .env.docker
@@ -36,6 +37,8 @@ services:
     environment:
       - SPARK_WORKER_MEMORY=1G
       - SPARK_WORKER_CORES=1
+    volumes:
+      - ./spark/output:/opt/spark/output
 
   mongo:
     image: mongo
