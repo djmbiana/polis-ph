@@ -11,5 +11,6 @@ except ImportError:
     pass
 
 # POSTGRES information
-POSTGRES_URL = os.getenv("POSTGRES_URL")
-MONGO_URL = os.getenv("MONGO_URL")
+POSTGRES_URL = os.getenv("POSTGRES_URL", "")
+MONGO_URL = os.getenv("MONGO_URL", "")
+RAW_DATA_PATH = REPO_ROOT / os.getenv("RAW_DATA_PATH", "datasets")

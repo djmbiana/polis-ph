@@ -2,11 +2,13 @@ from pathlib import Path
 
 import pandas as pd
 from pymongo import MongoClient
+from sqlalchemy import create_engine
 
 import config as con
 
 file_path_senate = con.RAW_DATA_PATH / "senate25-final_updated.csv"
 file_path_partylist = con.RAW_DATA_PATH / "partylist25-final_updated.csv"
+postgres_url = con.POSTGRES_URL
 
 
 def load_senate_25(filepath: Path) -> pd.DataFrame:
@@ -19,6 +21,8 @@ def load_senate_25(filepath: Path) -> pd.DataFrame:
     db = client["polis"]
     db["raw_senate_25"].insert_many(df.to_dict("records"))
     client.close()
+    eng = create_engine(postgres_url)
+    df.to_sql("senate_25", eng, if_exists="replace", index=False, schema="raw")
     return df
 
 
@@ -32,6 +36,8 @@ def load_partylist_25(filepath: Path) -> pd.DataFrame:
     db = client["polis"]
     db["raw_partylist_25"].insert_many(df.to_dict("records"))
     client.close()
+    eng = create_engine(postgres_url)
+    df.to_sql("partylist_25", eng, if_exists="replace", index=False, schema="raw")
     return df
 
 
