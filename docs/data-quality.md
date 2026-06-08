@@ -35,3 +35,8 @@
 - Wide format: candidate votes stored as individual columns, one per candidate (66 total)
 - Candidates tend to score higher vote shares in their home region (tested against Dela Rosa, Go, and Pangilinan)
 - Top 12 winners align with COMELEC's official results (confirms dataset accuracy)
+
+## Spark findings
+- Total rows: 92,822 (domestic: 92,488, OAV: 234, LAV: 100)
+- Validation checks passed: no negative values, no invalid turnout, all regions valid
+- Parquet output written to spark/output/senate_25/ and spark/output/partylist_25/
