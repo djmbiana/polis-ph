@@ -138,6 +138,8 @@ Keeping it as raw CSV's: rejected as csv's will take up more storage as it does 
 ## Context
 DuckDB will be chosen instead of PostgreSQL due to polis' OLAP focused workload. It's ability to have fast analytical queries and native parquet support will simplify a lot of the set up for the final dashboard site.
 
+PostgreSQL remains in the stack exclusively for Airflow metadata storage as per ADR-003.
+
 ## Considered
 - PostgreSQL: rejected as polis does not require transactional operations or concurrent writes to the database. And because it would add additional infrastructural overhead (duckdb does not require a server file).
 

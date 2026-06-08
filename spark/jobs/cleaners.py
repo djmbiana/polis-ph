@@ -35,7 +35,7 @@ df = (
 def normalize_columns(df: DataFrame) -> DataFrame:
     """
     Changes column names from camelCase to snake_case for readability and to follow python syntax.
-    Convers all columns to UPPERCASE to follow the format of the candidate names.
+    Converts all columns to UPPERCASE to follow the format of the candidate names.
     """
     snake_cols = [
         re.sub(r"(?<=[a-z])(?=[A-Z])", "_", col).upper() for col in df.columns
