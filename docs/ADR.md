@@ -133,3 +133,16 @@ Keeping it as raw CSV's: rejected as csv's will take up more storage as it does 
 - **Bad:** Not human-readable like CSV or JSON, Updating individual records is difficult (files are typically re-written), produces multiple files instead of 1 file.
 
 ---
+## ADR-009: DuckDB instead of PostgreSQL 
+
+## Context
+DuckDB will be chosen instead of PostgreSQL due to polis' OLAP focused workload. It's ability to have fast analytical queries and native parquet support will simplify a lot of the set up for the final dashboard site.
+
+## Considered
+- PostgreSQL: rejected as polis does not require transactional operations or concurrent writes to the database. And because it would add additional infrastructural overhead (duckdb does not require a server file).
+
+## Trade-offs
+- **Good:** Native parquet support, fast analytical queries, no infrastructure needed
+- **Bad:** No built in API, Web doesn't have native duckdb support (it has to talk to fastapi first), Less mature ecosystem as compared to postgres
+
+
