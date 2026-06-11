@@ -11,14 +11,24 @@ file_path_partylist = con.RAW_DATA_PATH / "partylist25-final_updated.csv"
 postgres_url = con.POSTGRES_URL
 
 
+def _strip_dots(df: pd.DataFrame) -> pd.DataFrame:
+    # The MongoDB Spark Connector v10+ treats any dot in a field name as a nested-document
+    # path separator. Candidate columns contain dots in both ballot numbers ("1. ABALOS")
+    # and abbreviations ("JR.", "ATTY.", "R."). All dots must be stripped or the connector
+    # returns null for those columns.
+    df.columns = df.columns.str.replace(".", "", regex=False)
+    return df
+
+
 def load_senate_25(filepath: Path) -> pd.DataFrame:
     """
     loads the senate_25 csv into raw.senate_25 table in postgresql.
     replaces the table if it already exists.
     """
-    df = pd.read_csv(filepath)
+    df = _strip_dots(pd.read_csv(filepath))
     client = MongoClient(con.MONGO_URL)
     db = client["polis"]
+    db["raw_senate_25"].drop()
     db["raw_senate_25"].insert_many(df.to_dict("records"))
     client.close()
     eng = create_engine(postgres_url)
@@ -31,9 +41,10 @@ def load_partylist_25(filepath: Path) -> pd.DataFrame:
     loads the partylist_25 csv into raw.partylist_25 table in postgresql.
     replaces the table if it already exists.
     """
-    df = pd.read_csv(filepath)
+    df = _strip_dots(pd.read_csv(filepath))
     client = MongoClient(con.MONGO_URL)
     db = client["polis"]
+    db["raw_partylist_25"].drop()
     db["raw_partylist_25"].insert_many(df.to_dict("records"))
     client.close()
     eng = create_engine(postgres_url)
