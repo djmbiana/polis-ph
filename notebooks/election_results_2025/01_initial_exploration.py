@@ -31,7 +31,16 @@ def _():
     client = MongoClient(MONGO_URL)
     db = client["polis"]
     collection = db["raw_election_results"]
-    return collection, pd
+    return collection, db, pd
+
+
+@app.cell
+def _(db):
+    data_types = db["raw_election_results"].find_one()
+
+    for key, value in data_types.items():
+        print(f"{key}: {type(value).__name__}")
+    return
 
 
 @app.cell(hide_code=True)
