@@ -35,14 +35,20 @@ services:
     depends_on:
       - spark
     environment:
-      - SPARK_WORKER_MEMORY=1G
-      - SPARK_WORKER_CORES=1
+      # Must leave room in the ~8G Docker VM for MongoDB, Postgres, and Airflow
+      - SPARK_WORKER_MEMORY=3G
+      - SPARK_WORKER_CORES=4
     volumes:
       - ./spark/output:/opt/spark/output
 
   mongo:
     image: mongo
     restart: unless-stopped
+    # The Docker VM only has ~8G shared by all services. Without these caps,
+    # WiredTiger sizes its cache off the whole VM (~3.4G) and mongod gets
+    # OOM-killed by the VM's global OOM killer during large Spark reads.
+    command: ["--wiredTigerCacheSizeGB", "0.75"]
+    mem_limit: 2g
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
