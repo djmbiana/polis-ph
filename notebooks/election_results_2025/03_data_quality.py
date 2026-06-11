@@ -21,6 +21,9 @@ def _():
     client = MongoClient(MONGO_URL)
     db = client["polis"]
     collection = db["raw_election_results"]
+    collection.create_index([
+        ("Position", 1), ("Precinct_Code", 1), ("Candidate_Name", 1), ("Total_Votes", 1),
+    ])
     return (collection,)
 
 
@@ -75,15 +78,17 @@ def _(collection):
         }},
     ])) if _count > 0 else []
     _pd.DataFrame(_rows)
+    return
 
 
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     ## Total_Votes Consistency
-    Within a `(Precinct_Code, Contest_ID)` group, `Total_Votes` should be the same for all
-    candidates — it represents the total ballots cast in that contest at that precinct.
-    Groups where `min(Total_Votes) != max(Total_Votes)` are inconsistent.
+    Within a `(Precinct_Code, Position)` group (for Senator and Party List), `Total_Votes`
+    should be the same for all candidates — it represents the total ballots cast in that
+    contest at that precinct. Groups where `min(Total_Votes) != max(Total_Votes)` are inconsistent.
+    `Contest_ID` is `0` for all senatorial and party-list records so it cannot be used as the grouping key.
     """)
     return
 
@@ -92,48 +97,37 @@ def _(mo):
 def _(collection):
     import pandas as _pd
 
-    _pipeline = [
+    _result = list(collection.aggregate([
+        {"$match": {"Position": {"$in": ["Senator", "Party List"]}}},
         {
             "$group": {
-                "_id": {
-                    "Precinct_Code": "$Precinct_Code",
-                    "Contest_ID": "$Contest_ID",
-                },
-                "min_tv": {"$min": "$Total_Votes"},
-                "max_tv": {"$max": "$Total_Votes"},
-            }
-        },
-        {"$match": {"$expr": {"$ne": ["$min_tv", "$max_tv"]}}},
-        {"$count": "n"},
-    ]
-    _result = list(collection.aggregate(_pipeline, allowDiskUse=True))
-    _count = _result[0]["n"] if _result else 0
-    print(f"(Precinct_Code, Contest_ID) groups with inconsistent Total_Votes: {_count:,}")
-
-    _rows = list(collection.aggregate([
-        {
-            "$group": {
-                "_id": {
-                    "Precinct_Code": "$Precinct_Code",
-                    "Contest_ID": "$Contest_ID",
-                },
+                "_id": {"Precinct_Code": "$Precinct_Code", "Position": "$Position"},
                 "min_tv": {"$min": "$Total_Votes"},
                 "max_tv": {"$max": "$Total_Votes"},
                 "doc_count": {"$sum": 1},
             }
         },
         {"$match": {"$expr": {"$ne": ["$min_tv", "$max_tv"]}}},
-        {"$limit": 5},
-        {"$project": {
-            "_id": 0,
-            "Precinct_Code": "$_id.Precinct_Code",
-            "Contest_ID": "$_id.Contest_ID",
-            "min_Total_Votes": "$min_tv",
-            "max_Total_Votes": "$max_tv",
-            "doc_count": 1,
+        {"$facet": {
+            "total": [{"$count": "n"}],
+            "samples": [
+                {"$limit": 5},
+                {"$project": {
+                    "_id": 0,
+                    "Precinct_Code": "$_id.Precinct_Code",
+                    "Position": "$_id.Position",
+                    "min_Total_Votes": "$min_tv",
+                    "max_Total_Votes": "$max_tv",
+                    "doc_count": 1,
+                }},
+            ],
         }},
-    ], allowDiskUse=True)) if _count > 0 else []
+    ], allowDiskUse=True))
+    _count = _result[0]["total"][0]["n"] if _result and _result[0]["total"] else 0
+    print(f"(Precinct_Code, Position) groups with inconsistent Total_Votes: {_count:,}")
+    _rows = _result[0]["samples"] if _result else []
     _pd.DataFrame(_rows)
+    return
 
 
 @app.cell(hide_code=True)
@@ -154,45 +148,35 @@ def _(collection):
     import pandas as _pd
 
     _result = list(collection.aggregate([
+        {"$match": {"Position": {"$in": ["Senator", "Party List"]}}},
         {
             "$group": {
-                "_id": {
-                    "Precinct_Code": "$Precinct_Code",
-                    "Candidate_ID": "$Candidate_ID",
-                },
+                "_id": {"Precinct_Code": "$Precinct_Code", "Candidate_Name": "$Candidate_Name"},
                 "count": {"$sum": 1},
                 "scraped_at_values": {"$addToSet": "$Scraped_At"},
             }
         },
         {"$match": {"count": {"$gt": 1}}},
-        {"$count": "n"},
-    ], allowDiskUse=True))
-    _dup_count = _result[0]["n"] if _result else 0
-    print(f"(Precinct_Code, Candidate_ID) groups with more than one record: {_dup_count:,}")
-
-    _rows = list(collection.aggregate([
-        {
-            "$group": {
-                "_id": {
-                    "Precinct_Code": "$Precinct_Code",
-                    "Candidate_ID": "$Candidate_ID",
-                },
-                "count": {"$sum": 1},
-                "scraped_at_values": {"$addToSet": "$Scraped_At"},
-            }
-        },
-        {"$match": {"count": {"$gt": 1}}},
-        {"$sort": {"count": -1}},
-        {"$limit": 5},
-        {"$project": {
-            "_id": 0,
-            "Precinct_Code": "$_id.Precinct_Code",
-            "Candidate_ID": "$_id.Candidate_ID",
-            "count": 1,
-            "scraped_at_values": 1,
+        {"$facet": {
+            "total": [{"$count": "n"}],
+            "samples": [
+                {"$sort": {"count": -1}},
+                {"$limit": 5},
+                {"$project": {
+                    "_id": 0,
+                    "Precinct_Code": "$_id.Precinct_Code",
+                    "Candidate_Name": "$_id.Candidate_Name",
+                    "count": 1,
+                    "scraped_at_values": 1,
+                }},
+            ],
         }},
-    ], allowDiskUse=True)) if _dup_count > 0 else []
+    ], allowDiskUse=True))
+    _dup_count = _result[0]["total"][0]["n"] if _result and _result[0]["total"] else 0
+    print(f"(Precinct_Code, Candidate_Name) groups with more than one record: {_dup_count:,}")
+    _rows = _result[0]["samples"] if _result else []
     _pd.DataFrame(_rows)
+    return
 
 
 @app.cell(hide_code=True)

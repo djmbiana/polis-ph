@@ -38,7 +38,8 @@ def _():
 def _(mo):
     mo.md(r"""
     ## Row Count
-    Total number of documents in the collection.
+    - Total number of documents in the collection.
+    - Has more records as compared to senate_25 and partylist_25 combined (give or take around 180,000+)
     """)
     return
 
@@ -54,7 +55,9 @@ def _(collection):
 def _(mo):
     mo.md(r"""
     ## Distinct Positions and Row Counts
-    Each distinct `Position` value and how many records belong to it.
+
+    - Each distinct `Position` value and how many records belong to it.
+    - Has more information as it even scrapes local government data (senate_25 and partylist_25 only contain senate and partylist votes)
     """)
     return
 
@@ -77,9 +80,10 @@ def _(collection, pd):
 def _(mo):
     mo.md(r"""
     ## Null Counts Per Column
-    Number of null or missing values for each field across all documents.
+    - Number of null or missing values for each field across all documents.
     `$eq: [field, null]` in an aggregation pipeline matches both explicit `null` and missing fields.
     Single `$group` stage — one query for all 18 fields.
+    - No NULLs present within the dataset
     """)
     return
 

@@ -29,10 +29,12 @@ def _():
 def _(mo):
     mo.md(r"""
     ## Distinct Geographic Unit Counts
+
     How many distinct regions, provinces, and municipalities appear in the data.
-    Single `$group` with `$addToSet` for all three fields — one query, one pass.
-    - Expected: 17 regions, 82 provinces, and 1,634+ municipalities under standard COMELEC structure.
+    Single `$group` with `$addToSet` for all three fields - one query, one pass.
+    - Expected: 18 regions, 82 provinces, and 1,493 municipalities under standard COMELEC structure.
     - OAV and LAV are special voting groups that inflate region/province counts above the geographic baseline.
+        - OAV is not included, the additional region and provinces being LAV. The municipalities being under our expected digit is because of COMELECs clustered precinct system.
     """)
     return
 
@@ -48,7 +50,7 @@ def _(collection, pd):
                 "municipalities_set": {"$addToSet": "$Municipality"},
             }
         },
-    
+
         {
             "$project": {
                 "_id": 0,
