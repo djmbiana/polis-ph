@@ -104,5 +104,11 @@ def _(df):
     return
 
 
+@app.cell
+def _(df):
+    df.iloc[:, 12:].sum()
+    return
+
+
 if __name__ == "__main__":
     app.run()
