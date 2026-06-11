@@ -1,6 +1,5 @@
 import re
 import sys
-from functools import reduce
 
 sys.path.insert(0, "/opt/spark/src")
 
@@ -45,9 +44,11 @@ def check_negatives(df: DataFrame) -> DataFrame:
         for f in df.schema.fields
         if isinstance(f.dataType, (IntegerType, LongType))
     ]
-    conditions = [F.col(f"`{c}`") < 0 for c in numeric_cols]
-    condition: Column = reduce(lambda a, b: a | b, conditions)
-    negative_rows = df.filter(condition)
+    # Use least() over all columns instead of OR-ing per-column conditions.
+    # A chain of ORs gets pushed down to MongoDB as nested $or clauses, which
+    # exceeds MongoDB's max nesting depth (100) when there are 100+ columns.
+    row_min: Column = F.least(*[F.col(f"`{c}`") for c in numeric_cols])
+    negative_rows = df.filter(row_min < 0)
     count = negative_rows.count()
     if count > 0:
         raise ValueError(f"Found {count} rows with negative values, aborting job.")
