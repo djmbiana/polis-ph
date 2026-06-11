@@ -34,6 +34,9 @@ The long-format file covers all positions including LGU candidates, and will ser
 - **Good:** Adds an analytical layer to the map of voters later on.
 - **Bad:** Requires cross-validation between sources to ensure vote totals agree.
 
+### NOTE:
+- The long-format file will not loaded into the DAG as it runs for around 23 minutes on my local machine. It could be included later on during further improvement (ie: hosting on a cloud vm)
+
 ---
 
 ## ADR-003: PostgreSQL inside of Docker
