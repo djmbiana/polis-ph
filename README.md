@@ -189,6 +189,23 @@ erDiagram
 
 ## How to run
 
+### Streamlit dashboard (recommended)
+
+The DuckDB warehouse is pre-built and committed to the repo.
+
+```bash
+pip install -r requirements.txt
+streamlit run streamlit/app.py
+```
+
+Open `http://localhost:8501`.
+
+---
+
+### Reproduce the full pipeline (optional)
+
+Only needed if you want to re-run the pipeline from raw data.
+
 **Prerequisites:** Docker Desktop, Python 3.11+
 
 > This stack runs MongoDB, Spark, and Airflow simultaneously. Allocate at least 8GB RAM to Docker (Docker Desktop → Settings → Resources). Most modern laptops with 16GB total RAM can handle this comfortably.
