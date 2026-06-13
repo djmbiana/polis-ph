@@ -1,28 +1,11 @@
 services:
-  postgres:
-    image: postgres:16
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5433:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./sql:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   spark:
     image: spark:python3-java17
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
     ports:
       - '8081:8080'
       - '7077:7077'
-    volumes: 
+    volumes:
       - ./spark/jobs:/opt/spark/jobs
       - ./spark/output:/opt/spark/output
       - ./src:/opt/spark/src
@@ -35,7 +18,7 @@ services:
     depends_on:
       - spark
     environment:
-      # Must leave room in the ~8G Docker VM for MongoDB, Postgres, and Airflow
+      # Must leave room in the ~8G Docker VM for MongoDB and Airflow
       - SPARK_WORKER_MEMORY=3G
       - SPARK_WORKER_CORES=4
     volumes:
@@ -69,19 +52,19 @@ services:
       ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASS}
 
   airflow-init:
-    build: ./airflow 
+    build: ./airflow
     env_file:
       - .env
       - .env.docker
     environment:
       AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/airflow
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/airflow.db
       AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
       _AIRFLOW_DB_MIGRATE: 'true'
       _AIRFLOW_WWW_USER_CREATE: 'true'
       _AIRFLOW_WWW_USER_USERNAME: ${AIRFLOW_USER}
-      _AIRFLOW_WWW_USER_PASSWORD: ${AIRFLOW_PASSWORD} 
+      _AIRFLOW_WWW_USER_PASSWORD: ${AIRFLOW_PASSWORD}
       AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_JWT_SECRET}
     volumes:
       - ./airflow/dags:/opt/airflow/dags
@@ -89,9 +72,10 @@ services:
       - ./airflow/plugins:/opt/airflow/plugins
       - ./src:/opt/airflow/src
       - ./datasets:/opt/airflow/datasets
+      - airflow_db:/opt/airflow
     depends_on:
-      postgres:
-        condition: service_healthy
+      mongo:
+        condition: service_started
     command: >
       bash -c "airflow db migrate && airflow users create \
       --username ${AIRFLOW_USER} \
@@ -99,7 +83,7 @@ services:
       --firstname Admin \
       --lastname User \
       --role Admin \
-      --email djmbiana@gmail.com"  
+      --email djmbiana@gmail.com"
     user: "0:0"
 
   airflow-scheduler:
@@ -110,7 +94,7 @@ services:
     environment:
       AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/airflow
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/airflow.db
       AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
       AIRFLOW__API__BASE_URL: 'http://airflow-apiserver:8080'
@@ -124,10 +108,11 @@ services:
       - ./src:/opt/airflow/src
       - ./datasets:/opt/airflow/datasets
       - /var/run/docker.sock:/var/run/docker.sock
+      - airflow_db:/opt/airflow
     command: scheduler
     depends_on:
-      postgres:
-        condition: service_healthy
+      mongo:
+        condition: service_started
       airflow-init:
         condition: service_completed_successfully
     restart: unless-stopped
@@ -140,7 +125,7 @@ services:
     environment:
       AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/airflow
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/airflow.db
       AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
       AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_JWT_SECRET}
@@ -150,12 +135,13 @@ services:
       - ./airflow/plugins:/opt/airflow/plugins
       - ./src:/opt/airflow/src
       - ./datasets:/opt/airflow/datasets
+      - airflow_db:/opt/airflow
     command: api-server
     ports:
       - "8080:8080"
     depends_on:
-      postgres:
-        condition: service_healthy
+      mongo:
+        condition: service_started
       airflow-init:
         condition: service_completed_successfully
     restart: unless-stopped
@@ -168,7 +154,7 @@ services:
     environment:
       AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/airflow
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/airflow.db
       AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
       AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_JWT_SECRET}
@@ -178,10 +164,11 @@ services:
       - ./airflow/plugins:/opt/airflow/plugins
       - ./src:/opt/airflow/src
       - ./datasets:/opt/airflow/datasets
+      - airflow_db:/opt/airflow
     command: triggerer
     depends_on:
-      postgres:
-        condition: service_healthy
+      mongo:
+        condition: service_started
       airflow-init:
         condition: service_completed_successfully
     restart: unless-stopped
@@ -194,7 +181,7 @@ services:
     environment:
       AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/airflow
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/airflow.db
       AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
       AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_JWT_SECRET}
@@ -202,14 +189,15 @@ services:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
+      - airflow_db:/opt/airflow
     command: dag-processor
     depends_on:
-      postgres:
-        condition: service_healthy
+      mongo:
+        condition: service_started
       airflow-init:
         condition: service_completed_successfully
     restart: unless-stopped
 
 volumes:
-  postgres_data:
   mongo_data:
+  airflow_db:

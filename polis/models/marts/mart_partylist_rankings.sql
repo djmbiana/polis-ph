@@ -1,0 +1,17 @@
+WITH totals AS (
+    SELECT * FROM {{ ref('stg_partylist_totals') }}
+)
+SELECT
+    row_number() OVER (ORDER BY SUM(VOTES) DESC) AS RANK
+    , CANDIDATE_NAME
+    , SUM(VOTES) AS TOTAL_VOTES
+    , ROUND(SUM(VOTES) * 100.0 / SUM(SUM(VOTES)) OVER (), 2) AS VOTE_PERCENTAGE
+    , CASE
+        WHEN row_number() OVER (ORDER BY SUM(VOTES) DESC) <= 3 THEN 3
+        WHEN row_number() OVER (ORDER BY SUM(VOTES) DESC) <= 6 THEN 2
+        WHEN row_number() OVER (ORDER BY SUM(VOTES) DESC) <= 54 THEN 1
+        ELSE 0
+      END AS SEATS
+FROM totals
+GROUP BY CANDIDATE_NAME
+ORDER BY TOTAL_VOTES DESC

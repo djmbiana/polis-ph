@@ -1,0 +1,244 @@
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
+
+from utils import (
+    REGION_MAP,
+    apply_theme,
+    clean_name,
+    get_connection,
+    get_palette,
+    load_geojson,
+    render_region_ranking,
+    render_sidebar,
+)
+
+st.set_page_config(
+    page_title="Party List - Polis",
+    page_icon="🗳️",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+apply_theme()
+
+P = get_palette()
+
+SEAT_COLOR = {3: P["primary"], 2: P["green"], 1: P["muted"]}
+SEAT_CLASS = {3: "seats-3", 2: "seats-2", 1: "seats-1"}
+
+
+@st.cache_data
+def fetch_regional_votes() -> pd.DataFrame:
+    con = get_connection()
+    df = con.execute(
+        """
+        SELECT dp.REGION, SUM(fv.VOTES) AS TOTAL_VOTES
+        FROM fact_votes fv
+        JOIN dim_candidate dc ON fv.CANDIDATE_ID = dc.CANDIDATE_ID
+        JOIN dim_precinct dp ON fv.PRECINCT_ID = dp.PRECINCT_ID
+        WHERE dc.POSITION = 'Party List'
+          AND dp.REGION NOT IN ('OAV', 'LAV', 'NIR')
+        GROUP BY dp.REGION
+        ORDER BY TOTAL_VOTES DESC
+        """
+    ).fetchdf()
+    df["GEO_REGION"] = df["REGION"].map(REGION_MAP.get)
+    return df.dropna(subset=["GEO_REGION"])
+
+
+@st.cache_data
+def fetch_partylist_rankings() -> pd.DataFrame:
+    con = get_connection()
+    return con.execute("SELECT * FROM mart_partylist_rankings ORDER BY RANK").fetchdf()
+
+
+def build_map(regional_df: pd.DataFrame, geojson: dict) -> go.Figure:
+    fig = px.choropleth(
+        regional_df,
+        geojson=geojson,
+        locations="GEO_REGION",
+        featureidkey="properties.REGION",
+        color="TOTAL_VOTES",
+        color_continuous_scale=[
+            [0.0, P["map_lo"]],
+            [0.5, "#7a5828"],
+            [1.0, P["map_hi"]],
+        ],
+        hover_name="GEO_REGION",
+        hover_data={"TOTAL_VOTES": ":,", "GEO_REGION": False},
+    )
+    fig.update_geos(
+        visible=False,
+        bgcolor=P["bg"],
+        lataxis_range=[4.5, 21.5],
+        lonaxis_range=[115.5, 127.5],
+    )
+    fig.update_layout(
+        paper_bgcolor=P["bg"],
+        plot_bgcolor=P["bg"],
+        margin={"r": 0, "t": 0, "l": 0, "b": 0},
+        height=620,
+        coloraxis_colorbar=dict(
+            title="Votes",
+            tickfont=dict(color=P["faint"], size=10),
+            title_font=dict(color=P["faint"], size=10),
+            bgcolor=P["panel"],
+            bordercolor=P["border"],
+            borderwidth=1,
+            thickness=10,
+        ),
+    )
+    fig.update_traces(marker_line_color=P["border_strong"], marker_line_width=0.6)
+    return fig
+
+
+def build_qualified_chart(rankings_df: pd.DataFrame) -> go.Figure:
+    qualified: pd.DataFrame = rankings_df[rankings_df["SEATS"] > 0].copy()
+    qualified = qualified.sort_values("TOTAL_VOTES", ascending=True)
+    qualified["DISPLAY"] = qualified["CANDIDATE_NAME"].apply(
+        lambda n: clean_name(str(n))
+    )
+    colors = [SEAT_COLOR.get(int(s), P["muted"]) for s in qualified["SEATS"]]
+
+    fig = go.Figure(
+        go.Bar(
+            x=qualified["TOTAL_VOTES"],
+            y=qualified["DISPLAY"],
+            orientation="h",
+            marker_color=colors,
+            marker_line_width=0,
+            text=qualified["TOTAL_VOTES"].apply(lambda v: f"{v / 1e6:.2f}M"),
+            textposition="outside",
+            textfont=dict(color=P["muted"], size=11),
+            cliponaxis=False,
+            customdata=qualified["SEATS"],
+            hovertemplate="%{y}<br>%{x:,} votes · %{customdata} seat(s)<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        margin={"r": 90, "t": 20, "l": 10, "b": 40},
+        height=max(480, len(qualified) * 20),
+        xaxis=dict(
+            tickfont=dict(color=P["faint"], size=11),
+            gridcolor=P["border"],
+            zeroline=False,
+            showline=False,
+            tickformat=",",
+        ),
+        yaxis=dict(
+            tickfont=dict(color=P["text"], size=12),
+            gridcolor="rgba(0,0,0,0)",
+        ),
+        showlegend=False,
+    )
+    return fig
+
+
+def render_results_table(rankings_df: pd.DataFrame) -> None:
+    rows = []
+    for _, row in rankings_df.iterrows():
+        seats = int(row["SEATS"])
+        is_qualified = seats > 0
+        rank_color = P["primary"] if is_qualified else P["faint"]
+        text_color = P["text"] if is_qualified else P["muted"]
+        name_weight = "600" if is_qualified else "400"
+        name = clean_name(str(row["CANDIDATE_NAME"]))
+
+        if seats > 0:
+            cls = SEAT_CLASS.get(seats, "seats-1")
+            seats_html = f"<span class='{cls}'>{seats}</span>"
+        else:
+            seats_html = f"<span style='color:{P['faint']};'>—</span>"
+
+        rows.append(
+            f"<tr style='border-bottom:1px solid {P['border']};'>"
+            f"<td style='color:{rank_color};text-align:right;padding:0.55rem 1.5rem 0.55rem 0;"
+            f"font-size:0.85rem;width:3rem;vertical-align:middle;'>{row['RANK']}</td>"
+            f"<td style='color:{text_color};font-weight:{name_weight};font-size:0.88rem;"
+            f"padding:0.55rem 2rem 0.55rem 0;vertical-align:middle;'>{name}</td>"
+            f"<td style='color:{text_color};text-align:right;padding:0.55rem 2rem 0.55rem 0;"
+            f"font-size:0.88rem;vertical-align:middle;'>{int(row['TOTAL_VOTES']):,}</td>"
+            f"<td style='color:{P['faint']};text-align:right;padding:0.55rem 2rem 0.55rem 0;"
+            f"font-size:0.85rem;vertical-align:middle;'>{row['VOTE_PERCENTAGE']:.2f}%</td>"
+            f"<td style='padding:0.55rem 0.5rem;text-align:center;vertical-align:middle;'>{seats_html}</td>"
+            f"</tr>"
+        )
+    th = (
+        f"font-size:0.62rem;color:{P['faint']};text-transform:uppercase;"
+        f"letter-spacing:0.1em;font-weight:400;vertical-align:middle;"
+    )
+    st.markdown(
+        f"<table style='width:100%;border-collapse:collapse;"
+        f'font-family:"Source Sans 3",sans-serif;\'>'
+        f"<thead><tr style='border-bottom:1px solid {P['border_strong']};'>"
+        f"<th style='{th}padding:0.55rem 1.5rem 0.55rem 0;text-align:right;width:3rem;'>Rank</th>"
+        f"<th style='{th}padding:0.55rem 2rem 0.55rem 0;text-align:left;'>Party</th>"
+        f"<th style='{th}padding:0.55rem 2rem 0.55rem 0;text-align:right;'>Votes</th>"
+        f"<th style='{th}padding:0.55rem 2rem 0.55rem 0;text-align:right;'>Vote %</th>"
+        f"<th style='{th}padding:0.55rem 0.5rem;text-align:center;'>Seats</th>"
+        f"</tr></thead>"
+        f"<tbody>{''.join(rows)}</tbody>"
+        f"</table>",
+        unsafe_allow_html=True,
+    )
+
+
+# sidebar
+render_sidebar()
+
+# data
+regional_df = fetch_regional_votes()
+geojson = load_geojson()
+rankings_df = fetch_partylist_rankings()
+qualified_count = int((rankings_df["SEATS"] > 0).sum())
+
+# page
+st.markdown(
+    "<p class='tagline'>2025 Philippine Midterm Elections</p>", unsafe_allow_html=True
+)
+st.title("Party List Results")
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# votes by region
+st.markdown("<p class='section-label'>VOTES BY REGION</p>", unsafe_allow_html=True)
+st.markdown("## Where the votes came from")
+st.caption("Total party list votes per region · OAV, LAV, and NIR excluded.")
+
+st.markdown("<br style='line-height:0.5;'>", unsafe_allow_html=True)
+
+col_map, col_rank = st.columns([3, 2])
+with col_map:
+    st.plotly_chart(build_map(regional_df, geojson), use_container_width=True)
+with col_rank:
+    render_region_ranking(regional_df)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# parties which qualified
+st.markdown("<p class='section-label'>QUALIFIED PARTIES</p>", unsafe_allow_html=True)
+st.markdown(f"## {qualified_count} parties won seats")
+st.caption("Domestic votes only · OAV and LAV excluded · Source: COMELEC 2025")
+
+st.markdown("<br style='line-height:0.5;'>", unsafe_allow_html=True)
+
+with st.container(border=True):
+    st.plotly_chart(build_qualified_chart(rankings_df), use_container_width=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# all partylists
+st.markdown("<p class='section-label'>ALL PARTIES</p>", unsafe_allow_html=True)
+st.markdown("## Full results")
+st.caption(
+    f"{len(rankings_df)} parties on the ballot — {qualified_count} qualified for seats."
+)
+
+st.markdown("<br style='line-height:0.5;'>", unsafe_allow_html=True)
+
+with st.container(border=True):
+    render_results_table(rankings_df)
