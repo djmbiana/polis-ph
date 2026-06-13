@@ -38,8 +38,23 @@ def polis_dag():
         retries=3,
     )
 
+    clean_results = BashOperator(
+        task_id="clean_results",
+        bash_command="""docker exec polis-ph-spark-1 /opt/spark/bin/spark-submit \
+        --master spark://spark:7077 \
+        --packages org.mongodb.spark:mongo-spark-connector_2.13:11.0.0 \
+        --conf spark.jars.ivy=/tmp/.ivy \
+        --conf spark.driver.memory=4g \
+        --conf spark.executor.memory=6g \
+        --name 'Cleaning Election Results 2025' \
+        /opt/spark/jobs/clean_results.py /opt/spark/output/election_results_2025
+        """,
+        execution_timeout=datetime.timedelta(minutes=40),
+        retries=1,
+    )
+
     # dependencies
-    load_ingestion >> clean_senate >> clean_partylist  # type: ignore[operator]
+    load_ingestion >> clean_senate >> clean_partylist >> clean_results  # type: ignore[operator]
 
 
 polis_dag()

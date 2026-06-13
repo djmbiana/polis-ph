@@ -165,6 +165,50 @@ erDiagram
 
 ---
 
+## How to run
+
+**Prerequisites:** Docker Desktop (8GB RAM allocated to Docker), Python 3.11+, dbt-duckdb
+
+**1. Start the stack**
+```bash
+docker compose up -d
+```
+
+**2. Ingest raw data**
+
+Place the three source CSV files in `datasets/`:
+- `senate25-final_updated.csv`
+- `partylist25-final_updated.csv`
+- `philippines_2025_elections_2025_results.csv`
+
+Then trigger the Airflow DAG at `http://localhost:8080`. The DAG runs four steps in sequence:
+
+| Step | Task | Runtime |
+|---|---|---|
+| 1 | Ingest raw CSVs into MongoDB | ~5 min |
+| 2 | Clean senate25 via Spark | ~10 min |
+| 3 | Clean partylist25 via Spark | ~10 min |
+| 4 | Clean election_results_2025 via Spark | ~23 min |
+
+**Why clean_results takes 23 minutes:** The long-format file has 20,138,577 documents in MongoDB — roughly 4x the size of the senate and partylist files combined. Spark reads all Senator and Party List rows (~17M after filtering local elections), runs three validation checks across the full dataset, deduplicates on `(PRECINCT_CODE, CANDIDATE_NAME)`, and writes uncompressed Parquet. The uncompressed write is intentional (ADR-008: Snappy codec incompatible with ARM/aarch64). MongoDB is also memory-capped at 2GB, so the read is throttled to avoid OOM kills — this was the primary bottleneck during development.
+
+**3. Build the warehouse**
+```bash
+dbt run --project-dir polis
+dbt test --project-dir polis
+```
+
+**4. Run the dashboard**
+```bash
+streamlit run streamlit/app.py
+```
+
+Open `http://localhost:8501`.
+
+**Note:** Step 4 of the DAG (`clean_results`) runs for approximately 23 minutes due to the size of the long-format file (20M rows). MongoDB memory is capped at 2GB in `docker-compose.yml` — do not lower this or the job will crash.
+
+---
+
 ## Known data gaps
 
 **Vote total discrepancy:** The long-format file (`election_results_2025`) was scraped on 2025-08-21 before canvassing was complete. Vote totals in this file are lower than the official COMELEC certified results. The Senate and Party List pages use the wide-format files which reflect final certified results. The Regional Breakdown page uses the long-format file for geographic distribution only.
