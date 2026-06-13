@@ -16,5 +16,4 @@ airflow/logs/
 spark/output
 
 logs/
-polis.duckdb
 polis.duckdb.wal
