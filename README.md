@@ -2,7 +2,7 @@
 
 A data engineering pipeline and dashboard for the 2025 Philippine Midterm Elections. Built to make election data accessible and easy to understand for everyone.
 
-![Dashboard Screenshot](INSERT HERE)
+<img width="1102" height="474" alt="image" src="https://github.com/user-attachments/assets/cb746a1b-51aa-4a47-bc12-90173060e590" />
 
 ---
 
@@ -16,9 +16,22 @@ This is not an authoritative report. The data has known gaps documented below. T
 
 ## Dashboard
 
-![Senate Results](INSERT HERE)
-![Party List Results](INSERT HERE)
-![Regional Breakdown](INSERT HERE)
+### Senate Results:
+<img width="1049" height="815" alt="image" src="https://github.com/user-attachments/assets/4ec559f5-be40-4671-abd7-9facd116caa0" />
+<img width="1085" height="708" alt="image" src="https://github.com/user-attachments/assets/cb6dbf2a-0fba-4db6-bb58-cc8356a64438" />
+<img width="1063" height="799" alt="image" src="https://github.com/user-attachments/assets/959135e3-bf7f-4991-a330-8144502bd61d" />
+
+
+### Partylist Results:
+<img width="1052" height="809" alt="image" src="https://github.com/user-attachments/assets/9229c75c-fa38-4bbe-a2cd-07fbea0bbfa4" />
+<img width="1097" height="807" alt="image" src="https://github.com/user-attachments/assets/bf0e994d-dbc3-4dba-80dd-e7a43481cdf2" />
+<img width="1052" height="809" alt="image" src="https://github.com/user-attachments/assets/5152d2f4-b1d4-4d96-b6d5-1719a2b7d0c5" />
+
+### Candidate breakdown per region:
+<img width="1063" height="635" alt="image" src="https://github.com/user-attachments/assets/141e5608-0ad4-4e8d-a448-4dc056998d3b" />
+<img width="1067" height="651" alt="image" src="https://github.com/user-attachments/assets/bcc5402a-d03d-4d19-8e90-621f6f052378" />
+<img width="1047" height="820" alt="image" src="https://github.com/user-attachments/assets/589cdc44-440b-49aa-b5f0-b865698db455" />
+
 
 Three pages:
 
@@ -167,7 +180,9 @@ erDiagram
 
 ## How to run
 
-**Prerequisites:** Docker Desktop (8GB RAM allocated to Docker), Python 3.11+, dbt-duckdb
+**Prerequisites:** Docker Desktop, Python 3.11+
+
+> This stack runs MongoDB, Spark, and Airflow simultaneously. Allocate at least 8GB RAM to Docker (Docker Desktop → Settings → Resources). Most modern laptops with 16GB total RAM can handle this comfortably.
 
 **1. Start the stack**
 ```bash
