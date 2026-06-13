@@ -1,5 +1,14 @@
 # Polis
 
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat&logo=python&logoColor=white)
+![Apache Spark](https://img.shields.io/badge/Apache%20Spark-4.1.2-E25A1C?style=flat&logo=apachespark&logoColor=white)
+![Apache Airflow](https://img.shields.io/badge/Apache%20Airflow-3.2.2-017CEE?style=flat&logo=apacheairflow&logoColor=white)
+![dbt](https://img.shields.io/badge/dbt-1.11-FF694B?style=flat&logo=dbt&logoColor=white)
+![DuckDB](https://img.shields.io/badge/DuckDB-1.5.3-FFF000?style=flat&logo=duckdb&logoColor=black)
+![MongoDB](https://img.shields.io/badge/MongoDB-8.0-47A248?style=flat&logo=mongodb&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.58-FF4B4B?style=flat&logo=streamlit&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker&logoColor=white)
+
 A data engineering pipeline and dashboard for the 2025 Philippine Midterm Elections. Built to make election data accessible and easy to understand for everyone.
 
 <img width="1102" height="474" alt="image" src="https://github.com/user-attachments/assets/cb746a1b-51aa-4a47-bc12-90173060e590" />
