@@ -1,0 +1,10 @@
+SELECT PRECINCT_CODE
+       , REGION
+       , PROVINCE
+       , MUNICIPALITY
+       , BARANGAY
+       , CANDIDATE_NAME
+       , POSITION
+       , PARTY
+       , VOTES
+FROM read_parquet('/Users/derrick/Projects/polis-ph/spark/output/election_results_2025/*.parquet')

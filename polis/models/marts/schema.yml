@@ -1,0 +1,40 @@
+version: 2
+
+models:
+  - name: dim_precinct
+    columns:
+      - name: PRECINCT_ID
+        tests:
+          - unique
+          - not_null
+      - name: PRECINCT_CODE
+        tests:
+          - not_null
+
+  - name: dim_candidate
+    columns:
+      - name: CANDIDATE_ID
+        tests:
+          - unique
+          - not_null
+      - name: CANDIDATE_NAME
+        tests:
+          - not_null
+
+  - name: fact_votes
+    columns:
+      - name: PRECINCT_ID
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_precinct')
+              field: PRECINCT_ID
+      - name: CANDIDATE_ID
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_candidate')
+              field: CANDIDATE_ID
+      - name: VOTES
+        tests:
+          - not_null 

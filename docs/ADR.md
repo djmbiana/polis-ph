@@ -150,4 +150,72 @@ PostgreSQL remains in the stack exclusively for Airflow metadata storage as per 
 - **Good:** Native parquet support, fast analytical queries, no infrastructure needed
 - **Bad:** No built in API, Web doesn't have native duckdb support (it has to talk to fastapi first), Less mature ecosystem as compared to postgres
 
+---
+## ADR-010: Star Schema Design for Polis Analytical Warehouse
 
+## Context
+Phase 3 required designing a star schema to serve two distinct analytical use cases: 
+vote total analysis and geographic mapping. Three Parquet sources were available:
+senate25 (wide format, 92,822 rows), partylist25 (wide format, 92,822 rows), and
+election_results_2025 (long format, 17,152,915 rows). These sources have different
+grains and different levels of accuracy.
+
+## Decisions
+
+### Two-Fact-Table Design
+We use two fact tables instead of one because the sources operate at different grains.
+`fact_ballots` is precinct-level and sourced from the wide-format files. `fact_votes`
+is candidate-precinct-level and sourced from the long-format file. Forcing both into
+a single fact table would require either duplicating ballot integrity metrics or losing
+candidate-level vote granularity.
+
+### dim_precinct Sourced from Long-Format File
+`dim_precinct` is built from `raw_election_results` because it is the only source that
+carries `PRECINCT_CODE` as a standalone column. The wide-format files use `MACHINE_ID`
+as the precinct identifier. The tradeoff is that `dim_precinct` only covers 77,615
+precincts instead of the full 92,488 domestic precincts, leaving 14,973 rows in
+`fact_ballots` with a null `PRECINCT_ID`. This is documented in the data quality report.
+
+### ELECTION_TYPE_DIM Dropped
+An election type dimension was considered during schema design but rejected. The dataset
+only contains two position values ("Senator" and "Party List"). A dimension table for
+two static values adds unnecessary complexity. The `POSITION` column in `dim_candidate`
+serves this purpose.
+
+### fact_ballots Sources from Senate25 Only
+Both senate25 and partylist25 carry identical ballot integrity metrics per precinct
+(registered voters, actual voters, valid ballots, over/under votes). Unioning both
+would duplicate every precinct row. Senate25 is used as the sole source for
+`fact_ballots` since the values are the same across both files.
+
+## Consequences
+- `fact_ballots` has 14,973 rows with null `PRECINCT_ID` due to partial long-format coverage
+- Vote total analysis must use `fact_votes` aggregated from the long-format file, with
+  the caveat that totals are lower than official COMELEC results (mid-canvassing scrape)
+- For authoritative vote totals, the wide-format staging models should be queried directly
+
+---
+## ADR-011: Streamlit as Presentation Layer
+
+## Context
+The original Polis architecture specified SvelteKit + Mapbox GL JS + D3.js + Scrollama
+as the frontend, served by a FastAPI backend. This was scoped for a live interactive
+site. Given OJT beginning next semester and the need to ship a complete portfolio piece,
+the frontend scope was reassessed.
+
+## Decision
+Replace SvelteKit + FastAPI with Streamlit connected directly to DuckDB.
+
+## Reasons
+- Streamlit is Python-native, eliminating the context switch to JavaScript
+- DuckDB connects directly to Streamlit without an API layer
+- Streamlit Community Cloud provides a free public URL for portfolio visibility
+- The pipeline story remains intact: MongoDB -> Spark -> Parquet -> DuckDB -> dbt -> Streamlit
+- A polished dashboard is more legible to hiring managers than an unfinished SvelteKit app
+
+## Consequences
+- Mapbox GL JS choropleth map is deferred to a future scope when the project is hosted
+  on a cloud VM with sufficient resources
+- The live scrollytelling narrative is dropped in favor of a standard dashboard layout
+- Streamlit Community Cloud requires the DuckDB file to be bundled with the app or
+  hosted on accessible storage

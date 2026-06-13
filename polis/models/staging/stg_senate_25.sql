@@ -1,0 +1,12 @@
+SELECT MACHINE_ID
+       , REGION
+       , PROVINCE
+       , MUNICIPALITY
+       , BARANGAY
+       , REGISTERED_VOTERS
+       , ACTUAL_VOTERS
+       , VALID_BALLOT
+       , OVER_VOTES
+       , UNDER_VOTES
+       , OBTAINED_VOTES
+FROM read_parquet('/Users/derrick/Projects/polis-ph/spark/output/senate_25/domestic/*.parquet')

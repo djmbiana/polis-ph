@@ -14,3 +14,7 @@ airflow/logs/
 .env.docker
 
 spark/output
+
+logs/
+polis.duckdb
+polis.duckdb.wal
