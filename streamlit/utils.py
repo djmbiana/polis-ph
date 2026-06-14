@@ -1,5 +1,6 @@
 import json
 import re
+from pathlib import Path
 
 import duckdb
 import pandas as pd
@@ -98,12 +99,14 @@ def get_palette() -> dict:
 
 @st.cache_resource
 def get_connection() -> duckdb.DuckDBPyConnection:
-    return duckdb.connect("../polis.duckdb", read_only=True)
+    db_path = Path(__file__).parent.parent / "polis.duckdb"
+    return duckdb.connect(str(db_path), read_only=True)
 
 
 @st.cache_data
 def load_geojson() -> dict:
-    with open("./data/regions_simplified.json") as f:
+    geojson_path = Path(__file__).parent / "data" / "regions_simplified.json"
+    with open(geojson_path) as f:
         return json.load(f)
 
 
@@ -367,7 +370,7 @@ def render_sidebar() -> None:
 
     st.sidebar.divider()
 
-    # ── footer ────────────────────────────────────────────────────────────────
+    #  footer
     st.sidebar.markdown(
         f"<p style='font-size:0.68rem;color:{P['faint']};line-height:2;'>"
         f"Data: COMELEC 2025<br>Spark · dbt · DuckDB</p>",
@@ -377,12 +380,14 @@ def render_sidebar() -> None:
 
 def render_region_ranking(regional_df: pd.DataFrame) -> None:
     P = get_palette()
+    if regional_df.empty:
+        return
     max_votes = regional_df["TOTAL_VOTES"].max()
     rows = []
-    for i, row in enumerate(regional_df.itertuples(index=False)):
-        short = SHORT_NAMES.get(row.REGION, row.REGION)
-        bar_pct = row.TOTAL_VOTES / max_votes * 100
-        votes_m = f"{row.TOTAL_VOTES / 1e6:.1f}M"
+    for i, (_, row) in enumerate(regional_df.iterrows()):
+        short = SHORT_NAMES.get(str(row["REGION"]), str(row["REGION"]))
+        bar_pct = float(row["TOTAL_VOTES"]) / max_votes * 100
+        votes_m = f"{float(row['TOTAL_VOTES']) / 1e6:.1f}M"
         rows.append(
             f"<div style='display:flex;align-items:center;padding:0.4rem 0;"
             f"border-bottom:1px solid {P['border']};'>"
