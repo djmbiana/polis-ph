@@ -17,3 +17,4 @@ spark/output
 
 logs/
 polis.duckdb.wal
+polis.duckdb

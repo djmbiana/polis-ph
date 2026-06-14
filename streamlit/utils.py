@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from pathlib import Path
 
@@ -99,8 +100,8 @@ def get_palette() -> dict:
 
 @st.cache_resource
 def get_connection() -> duckdb.DuckDBPyConnection:
-    db_path = Path(__file__).parent.parent / "polis.duckdb"
-    return duckdb.connect(str(db_path), read_only=True)
+    token = os.environ["MOTHERDUCK_TOKEN"]
+    return duckdb.connect(f"md:polis?motherduck_token={token}")
 
 
 @st.cache_data
