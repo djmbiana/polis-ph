@@ -1,6 +1,9 @@
+from pathlib import Path
+
+import duckdb
 import streamlit as st
 
-from utils import apply_theme, get_connection, get_palette, render_sidebar
+from utils import apply_theme, get_palette, render_sidebar
 
 st.set_page_config(
     page_title="Polis",
@@ -16,7 +19,8 @@ P = get_palette()
 
 @st.cache_data
 def fetch_stats() -> tuple[int, int, int]:
-    con = get_connection()
+    db_path = Path(__file__).parent.parent / "polis.duckdb"
+    con = duckdb.connect(str(db_path), read_only=True)
     row_v = con.execute("SELECT SUM(VOTES) FROM fact_votes").fetchone()
     row_p = con.execute("SELECT COUNT(*) FROM dim_precinct").fetchone()
     row_c = con.execute("SELECT COUNT(*) FROM dim_candidate").fetchone()
