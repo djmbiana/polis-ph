@@ -25,6 +25,8 @@ This is not an authoritative report. The data has known gaps documented below.
 
 ## Dashboard
 
+Link to the dashboard can be accessed here: https://polis-ph.streamlit.app/
+
 ### Senate Results
 <img width="1049" height="815" alt="image" src="https://github.com/user-attachments/assets/4ec559f5-be40-4671-abd7-9facd116caa0" />
 <img width="1085" height="708" alt="image" src="https://github.com/user-attachments/assets/cb6dbf2a-0fba-4db6-bb58-cc8356a64438" />
