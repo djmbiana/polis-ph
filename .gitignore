@@ -10,13 +10,8 @@ venv/
 volumes/
 __marimo__/
 airflow/logs/
-
 .env.docker
-
 spark/output
-
 logs/
-polis.duckdb.wal
-polis.duckdb
 polis.duckdb
 polis.duckdb.wal
