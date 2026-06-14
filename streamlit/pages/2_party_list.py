@@ -1,3 +1,6 @@
+from pathlib import Path
+
+import duckdb
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -7,7 +10,6 @@ from utils import (
     REGION_MAP,
     apply_theme,
     clean_name,
-    get_connection,
     get_palette,
     load_geojson,
     render_region_ranking,
@@ -31,7 +33,8 @@ SEAT_CLASS = {3: "seats-3", 2: "seats-2", 1: "seats-1"}
 
 @st.cache_data
 def fetch_regional_votes() -> pd.DataFrame:
-    con = get_connection()
+    db_path = Path(__file__).parent.parent.parent / "polis.duckdb"
+    con = duckdb.connect(str(db_path), read_only=True)
     df = con.execute(
         """
         SELECT dp.REGION, SUM(fv.VOTES) AS TOTAL_VOTES
@@ -50,7 +53,8 @@ def fetch_regional_votes() -> pd.DataFrame:
 
 @st.cache_data
 def fetch_partylist_rankings() -> pd.DataFrame:
-    con = get_connection()
+    db_path = Path(__file__).parent.parent.parent / "polis.duckdb"
+    con = duckdb.connect(str(db_path), read_only=True)
     return con.execute("SELECT * FROM mart_partylist_rankings ORDER BY RANK").fetchdf()
 
 

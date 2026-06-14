@@ -1,3 +1,6 @@
+from pathlib import Path
+
+import duckdb
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -6,7 +9,6 @@ import streamlit as st
 from utils import (
     REGION_MAP,
     apply_theme,
-    get_connection,
     get_palette,
     load_geojson,
     parse_candidate,
@@ -28,7 +30,8 @@ P = get_palette()
 
 @st.cache_data
 def fetch_regional_votes() -> pd.DataFrame:
-    con = get_connection()
+    db_path = Path(__file__).parent.parent.parent / "polis.duckdb"
+    con = duckdb.connect(str(db_path), read_only=True)
     df = con.execute(
         """
         SELECT dp.REGION, SUM(fv.VOTES) AS TOTAL_VOTES
@@ -47,7 +50,8 @@ def fetch_regional_votes() -> pd.DataFrame:
 
 @st.cache_data
 def fetch_senate_rankings() -> pd.DataFrame:
-    con = get_connection()
+    db_path = Path(__file__).parent.parent.parent / "polis.duckdb"
+    con = duckdb.connect(str(db_path), read_only=True)
     return con.execute("SELECT * FROM mart_senate_rankings ORDER BY RANK").fetchdf()
 
 
